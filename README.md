@@ -8,7 +8,7 @@ Purpose of this very simple tool is to:
 - get a reverse DNS lookup
 - get IP information such as ASN, Organisation name, Network name, Country
 
-Note: IP Lookup uses pwhois server to get information.
+Note: IP Lookup uses [pwhois](https://pwhois.org/) server to get information.
 
 # Note
 
