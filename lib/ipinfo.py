@@ -1,35 +1,37 @@
-#Python pwhois library
+#Python ipinfo library
 
 import socket
 import time
 import re
 import logging
+import ipaddress
+from lib.log import setup_logger
 
 pw_server = 'whois.pwhois.org'
 pw_port = 43
 
 class ip(object):
-	"""This is the data returned by a pwhois lookup, format is modeled after the output of whob"""
-	@classmethod
-	def lookup(cls, query, logger=None):
-		def _msg(level, msg):
-			if logger:
-				eval(f"logger.{level}")(msg)
-			else:
-				print(f"[{level}] [{query}] DNS lookup failed: {e}")
+	logger = setup_logger(__name__)
 
+	@classmethod
+	def set_log_level(cls, log_level=logging.INFO):
+		cls.logger.setLevel(log_level)
+
+	@classmethod
+	def lookup(cls, query):
 		def _prepare_result(ip='', fqdn='', ptr='', origin_as='', prefix='', as_path='', as_org_name='', org_name='', net_name='', cache_date='', latitude='', longitude='', city='', region='', country='', cc=''):
 			return {"IP": ip, "Primary FQDN": fqdn, "PTR": ptr, "Origin AS": origin_as, "Prefix": prefix, "AS path": as_path, "AS Org Name": as_org_name, "Org Name": org_name, "Net Name": net_name, "Cache Date": cache_date, "Latitude": latitude, "Longitude": longitude, "City": city, "Region": region, "Country": country, "CC": cc}
 
 		"""Single query, takes a single IP (represented as a string) and returns a pwhois_obj."""
-		if ip_check(query):
+		if ip_ver := ip_check(query):
+			cls.logger.debug(f"{query} is a valid {ip_ver} address")
 			# Get FQDN(s)
 			try:
 				answers = socket.gethostbyaddr(query)
 				fqdn = answers[0]
 				ptr = answers[1]
 			except Exception as e:
-				_msg('error', f"[{query}] DNS lookup failed: {e}")			
+				cls.logger.error(f"[{query}] DNS lookup failed: {e}")			
 				fqdn = ''
 				ptr = ['']
 
@@ -60,46 +62,19 @@ class ip(object):
 						whois_data[13].split(': ')[1]
 					)
 			except Exception as error:
-				_msg('error', f"Could not retrieve information about {query}: {error}")
+				cls.logger.error(f"Could not retrieve information about {query}: {error}")
 				return _prepare_result(query, fqdn, ptr)
 		else:
-			_msg('error', f"Input {query} is invalid")
-
-class asn(object):
-	def __init__(self, asn, ranges):
-		self.asn = asn
-		self.ranges = list(ranges)
-
-	@classmethod
-	def lookup(cls, as_n):
-		s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-		s.connect((pw_server, pw_port))
-		query_bytes = 'app="Python pwhois client" routeview source-as={}\r\n'.format(as_n).encode()
-		s.send(query_bytes)
-		resp = recvall(s)
-		range_output = resp.split("\n")[2:-1]
-		ranges = set()
-		for range in range_output:
-			ranges.add(range.lstrip("*> ").split(" ")[0])
-		return asn(as_n, ranges)
-
-	def __str__(self):
-		return "ASN {}\nRanges:\n{}".format(self.asn, "\n".join([r for r in self.ranges]))
-
-
-def ip_check(ip):
-	ip_reg = re.compile(
-		'(?:^(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[0-9]{1,2})\.(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[0-9]{1,2})\.(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[0-9]{1,2})\.(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[0-9]{1,2})$)')
-	if ip_reg.match(ip):
-		return True
-	else:
+			cls.logger.error(f"Input {query} is invalid")
+	
+def ip_check(data):
+	try:
+		valid_ip = ipaddress.ip_address(data)
+		if isinstance(valid_ip, ipaddress.IPv4Address):
+			return 'IPv4'
+			#self.logger.debug(f"{data} is a valid IPv4 address")
+		elif isinstance(valid_ip, ipaddress.IPv6Address):
+			#self.logger.debug(f"{data} is a valid IPv6 address")
+			return 'IPv6'
+	except ValueError:
 		return False
-
-
-def recvall(sock):
-	data = ""
-	part = None
-	while part != "":
-		part = sock.recv(4096)
-		data += part
-	return data

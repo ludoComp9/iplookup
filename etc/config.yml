@@ -1,4 +1,0 @@
-logger:
-  datetime_format: "%Y-%m-%dT%H:%M:%S+z"
-  level: 20
-  log_format: "[{asctime}][{levelname}][{name}] : {message}"

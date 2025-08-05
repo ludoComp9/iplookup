@@ -1,3 +1,2 @@
 easydict==1.13
-pwhois==1.0
 PyYAML==6.0.2

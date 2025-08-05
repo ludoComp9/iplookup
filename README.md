@@ -10,12 +10,28 @@ Purpose of this very simple tool is to:
 
 Note: IP Lookup uses pwhois server to get information.
 
-# Installation
+# Note
+
+This tool has been successfully tested on macOS 15.6/Python 3.9.6 with 255 IP requests.
+
+IP information like Longitude, Latitude, City and Region could be incorrect.
+
+# Requirements
 
 ***If Git client tool is not already installed on your environment***
+
+- **Debian / Linux**
 ```
 sudo apt update && sudo apt install git -y
 ```
+
+- **macOS**
+```
+brew update
+brew install git
+```
+
+# Installation
 
 ```
 git clone https://github.com/ludoComp9/lookup.git
@@ -31,7 +47,7 @@ pip3 install -r requirements.txt
 usage: lookup.py [-h] [-V] [-d] [-i <ip address>] [--file <filename>] [-s <separator_character>] [--field <separator_field>] [--format {json,csv}]
                  [-o <filename>]
 
---== IP lookup v0.01 ==--
+--== IP lookup v0.02 ==--
 
 optional arguments:
   -h, --help            show this help message and exit
