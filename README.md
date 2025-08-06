@@ -1,4 +1,4 @@
-# lookup
+# IP Lookup
 
 A small Python script to retrieve information from IP address(es) given in parameter.
 
@@ -15,6 +15,8 @@ Note: IP Lookup uses [pwhois](https://pwhois.org/) server to get information.
 This tool has been successfully tested on macOS 15.6/Python 3.9.6 with 255 IP requests.
 
 IP information like Longitude, Latitude, City and Region could be incorrect.
+
+Inspirted by [pwhois](https://github.com/dagonis/pwhois) Python library.
 
 # Requirements
 
@@ -34,8 +36,8 @@ brew install git
 # Installation
 
 ```
-git clone https://github.com/ludoComp9/lookup.git
-cd lookup
+git clone https://github.com/ludoComp9/iplookup.git
+cd iplookup
 python3 -m venv venv
 source venv/bin/activate
 pip3 install -r requirements.txt
@@ -44,7 +46,7 @@ pip3 install -r requirements.txt
 # Usage
 
 ```
-usage: lookup.py [-h] [-V] [-d] [-i <ip address>] [--file <filename>] [-s <separator_character>] [--field <separator_field>] [--format {json,csv}]
+usage: iplookup.py [-h] [-V] [-d] [-i <ip address>] [--file <filename>] [-s <separator_character>] [--field <separator_field>] [--format {json,csv}]
                  [-o <filename>]
 
 --== IP lookup v0.02 ==--
@@ -69,7 +71,7 @@ optional arguments:
 ## Get IP information for an IPv4 address given in input
 
 ```
-./lookup.py -i 8.8.8.8
+./iplookup.py -i 8.8.8.8
 [2025-08-05T23:55:20+z][INFO][IP Lookup] : 1 lookup(s) successfully performed for 1 IP address(s) given.
 [{'IP': '8.8.8.8', 'Primary FQDN': 'dns.google', 'PTR': ['8.8.8.8.in-addr.arpa'], 'Origin AS': '15169', 'Prefix': '8.8.8.0/24', 'AS path': '8220 15169', 'AS Org Name': 'Google LLC', 'Org Name': 'Google LLC', 'Net Name': 'GOGL', 'Cache Date': 'Aug 05 2025 06:03:15', 'Latitude': '37.405992', 'Longitude': '-122.078515', 'City': 'Mountain View', 'Region': 'California', 'Country': 'United States of America', 'CC': 'US'}]
 ```
@@ -84,7 +86,7 @@ optional arguments:
 
 - Command
 ```
-./lookup.py --file ip_to_check.txt --output result.csv
+./iplookup.py --file ip_to_check.txt --output result.csv
 [2025-08-05T14:59:19+z][INFO][IP Lookup] : 2 lookup(s) successfully performed for 2 IP address(s) given.
 ```
 
