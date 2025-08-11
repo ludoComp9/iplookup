@@ -23,22 +23,25 @@ class ip(object):
 			return {"IP": ip, "Primary FQDN": fqdn, "PTR": ptr, "Origin AS": origin_as, "Prefix": prefix, "AS path": as_path, "AS Org Name": as_org_name, "Org Name": org_name, "Net Name": net_name, "Cache Date": cache_date, "Latitude": latitude, "Longitude": longitude, "City": city, "Region": region, "Country": country, "CC": cc}
 
 		"""Single query, takes a single IP (represented as a string) and returns a pwhois_obj."""
-		if ip_ver := ip_check(query):
-			cls.logger.debug(f"{query} is a valid {ip_ver} address")
+		# Support IP address that could contain [.] separator
+		upd_query = normalize_ip(query)
+
+		if ip_ver := check_ip(upd_query):
+			cls.logger.debug(f"{upd_query} is a valid {ip_ver} address")
 			# Get FQDN(s)
 			try:
-				answers = socket.gethostbyaddr(query)
+				answers = socket.gethostbyaddr(upd_query)
 				fqdn = answers[0]
 				ptr = answers[1]
 			except Exception as e:
-				cls.logger.error(f"[{query}] DNS lookup failed: {e}")			
+				cls.logger.error(f"[{upd_query}] DNS lookup failed: {e}")			
 				fqdn = ''
 				ptr = ['']
 
 			# Get Lookup information
 			s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 			s.connect((pw_server, pw_port))
-			query_bytes = (query + "\r\n").encode()
+			query_bytes = (upd_query + "\r\n").encode()
 			s.send(query_bytes)
 			resp = s.recv(500)
 			whois_data = resp.decode('utf-8').split('\n')
@@ -63,11 +66,15 @@ class ip(object):
 					)
 			except Exception as error:
 				cls.logger.error(f"Could not retrieve information about {query}: {error}")
-				return _prepare_result(query, fqdn, ptr)
+				return _prepare_result(upd_query, fqdn, ptr)
 		else:
 			cls.logger.error(f"Input {query} is invalid")
-	
-def ip_check(data):
+
+def normalize_ip(ip_str: str) -> str:
+    # Replace [.] with .
+    return re.sub(r'\[\.\]', '.', ip_str)
+
+def check_ip(data):
 	try:
 		valid_ip = ipaddress.ip_address(data)
 		if isinstance(valid_ip, ipaddress.IPv4Address):

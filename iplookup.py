@@ -1,4 +1,4 @@
-#!python3
+#!/usr/bin/python3
 
 # -*- coding: utf-8 -*-
 
@@ -12,7 +12,7 @@ from lib.log import setup_logger
 from lib.ipinfo import ip
 
 
-__version__ = '0.02'
+__version__ = '0.03'
 
 def getOptions():
 	""" Argument control """
