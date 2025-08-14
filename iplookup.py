@@ -1,9 +1,10 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 
 # -*- coding: utf-8 -*-
 
 import argparse
 import os
+import sys
 import json
 import csv
 import easydict
@@ -12,20 +13,28 @@ from lib.log import setup_logger
 from lib.ipinfo import ip
 
 
-__version__ = '0.03'
+__version__ = '0.04'
 
-def getOptions():
+def get_options():
 	""" Argument control """
-	args = argparse.ArgumentParser(description=f"--== IP lookup v{__version__} ==--")
-	args.add_argument('-V', '--version', action='version', version='{} v{}'.format(os.path.basename(__file__), __version__))
-	args.add_argument('-d', '--debug', dest='debug', help='Enable debug mode', action="store_true")
-	args.add_argument('-i', dest='ip', help='IP to check', metavar='<ip address>')
-	args.add_argument('--file', dest='ipfile', help='IPs to check', metavar='<filename>', action='store')
-	args.add_argument('-s', '--separator', dest='separator', help='Separator used in input CSV file', metavar='<separator_character>', default=',')
-	args.add_argument('--field', '--field', dest='field', help='Select field includes IP address', metavar='<separator_field>')
-	args.add_argument('--format', dest='output_format', help='Specify output format (default: csv)', choices=['json', 'csv'], default='csv', type=str.lower)
-	args.add_argument('-o', '--output', dest='output_file', help='Specify the output filename', metavar='<filename>', action='store')
-	return args.parse_args()
+	parser = argparse.ArgumentParser(description=f"--== IP lookup v{__version__} ==--")
+	parser.add_argument('-V', '--version', action='version', version='{} v{}'.format(os.path.basename(__file__), __version__))
+	parser.add_argument('-d', '--debug', dest='debug', help='enable debug mode', action="store_true")
+	parser.add_argument('-i', dest='ip', help='IP to check', metavar='<ip address>')
+	parser.add_argument('--file', dest='ipfile', help='IPs to check', metavar='<filename>', action='store')
+	parser.add_argument('-s', '--separator', dest='separator', help='specify the separator used in input CSV file', metavar='<separator_character>', default=',')
+	parser.add_argument('--field', '--field', dest='field', help='select field includes IP address', metavar='<separator_field>')
+	parser.add_argument('--format', dest='output_format', help='specify output format (default: csv)', choices=['json', 'csv'], default='csv', type=str.lower)
+	parser.add_argument('-o', '--output', dest='output_file', help='specify the output filename', metavar='<filename>', action='store')
+	parser.add_argument('--proxy', dest='proxy', help='specify HTTP proxy with port. Example: "localhost:3128"', metavar='<proxy_host>:<proxy_port>', type=parse_proxy, action='store')
+	return parser
+
+def parse_proxy(value):
+	try:
+		host, port = value.split(":")
+		return host, int(port)
+	except ValueError:
+		raise argparse.ArgumentTypeError("Proxy must be defined as <host>:<port>. (Example: localhost:3128)")
 
 def output_json(data, output_file=None):
 	if output_file:
@@ -46,7 +55,8 @@ def output_csv(data, output_file=None):
 
 if __name__ == "__main__":
 	# Initialization
-	args = getOptions()
+	args_parser = get_options()
+	args = args_parser.parse_args()
 
 	if args.debug:
 		log_level = 10	# DEBUG
@@ -56,10 +66,14 @@ if __name__ == "__main__":
 	result = []
 	nb_ip = 0
 
+	if not args.ip and not args.ipfile:
+		args_parser.print_help()
+		sys.exit(1)
+	
 	if args.ip:
 		nb_ip += 1
 		ip.set_log_level(log_level)
-		result.append(ip.lookup(args.ip))
+		result.append(ip.lookup(args.ip, args.proxy))
 	elif args.ipfile:
 		with open(args.ipfile, newline='', encoding='utf-8') as csvfile:
 			reader = csv.reader(csvfile, delimiter=args.separator)
@@ -70,7 +84,7 @@ if __name__ == "__main__":
 				else:
 					item = row[args.field]
 				nb_ip += 1
-				if res := ip.lookup(item):
+				if res := ip.lookup(item, args.proxy):
 					result.append(res)
 	if result:
 		logger.info(f"{len(result)} lookup(s) successfully performed for {nb_ip} IP address(s) given.")

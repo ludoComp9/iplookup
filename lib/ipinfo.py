@@ -1,6 +1,7 @@
 #Python ipinfo library
 
 import socket
+import socks
 import time
 import re
 import logging
@@ -18,7 +19,7 @@ class ip(object):
 		cls.logger.setLevel(log_level)
 
 	@classmethod
-	def lookup(cls, query):
+	def lookup(cls, query, proxy=None):
 		def _prepare_result(ip='', fqdn='', ptr='', origin_as='', prefix='', as_path='', as_org_name='', org_name='', net_name='', cache_date='', latitude='', longitude='', city='', region='', country='', cc=''):
 			return {"IP": ip, "Primary FQDN": fqdn, "PTR": ptr, "Origin AS": origin_as, "Prefix": prefix, "AS path": as_path, "AS Org Name": as_org_name, "Org Name": org_name, "Net Name": net_name, "Cache Date": cache_date, "Latitude": latitude, "Longitude": longitude, "City": city, "Region": region, "Country": country, "CC": cc}
 
@@ -39,7 +40,14 @@ class ip(object):
 				ptr = ['']
 
 			# Get Lookup information
-			s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+			# --> Initialize proxy settings (if required)
+			if proxy:
+				proxy_host, proxy_port = proxy
+				cls.logger.debug(f"Proxy host:{proxy_host} port:{proxy_port}")
+				s = socks.socksocket()
+				s.set_proxy(socks.HTTP, proxy_host, proxy_port)
+			else:
+				s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 			s.connect((pw_server, pw_port))
 			query_bytes = (upd_query + "\r\n").encode()
 			s.send(query_bytes)

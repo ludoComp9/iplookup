@@ -41,29 +41,32 @@ cd iplookup
 python3 -m venv venv
 source venv/bin/activate
 pip3 install -r requirements.txt
+chmod a+x iplookup.py
 ```
 
 # Usage
 
 ```
 usage: iplookup.py [-h] [-V] [-d] [-i <ip address>] [--file <filename>] [-s <separator_character>] [--field <separator_field>] [--format {json,csv}]
-                 [-o <filename>]
+                   [-o <filename>] [--proxy <proxy_host>:<proxy_port>]
 
---== IP lookup v0.02 ==--
+--== IP lookup v0.04 ==--
 
 optional arguments:
   -h, --help            show this help message and exit
   -V, --version         show program's version number and exit
-  -d, --debug           Enable debug mode
+  -d, --debug           enable debug mode
   -i <ip address>       IP to check
   --file <filename>     IPs to check
   -s <separator_character>, --separator <separator_character>
-                        Separator used in input CSV file
+                        specify the separator used in input CSV file
   --field <separator_field>, --field <separator_field>
-                        Select field includes IP address
-  --format {json,csv}   Specify output format (default: csv)
+                        select field includes IP address
+  --format {json,csv}   specify output format (default: csv)
   -o <filename>, --output <filename>
-                        Specify the output filename
+                        specify the output filename
+  --proxy <proxy_host>:<proxy_port>
+                        specify HTTP proxy with port. Example: "localhost:3128"
 ```
 
 # Example
