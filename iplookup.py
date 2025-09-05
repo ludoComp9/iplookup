@@ -66,6 +66,11 @@ if __name__ == "__main__":
 	args_parser = get_options()
 	args = args_parser.parse_args()
 	script_name = os.path.splitext(os.path.basename(sys.argv[0]))[0]
+	if args.debug:
+		log_level = 10	# DEBUG
+	else:
+		log_level = 20	# INFO
+	logger = setup_logger(script_name, log_level)
 	if not args.proxy and not args.noproxy and 'https_proxy' in os.environ:
 		# Use default proxy
 		logger.debug('Proxy system detected. Script will use it.')
@@ -74,12 +79,7 @@ if __name__ == "__main__":
 	else:
 		# Ignore system proxy
 		args.proxy = None
-
-	if args.debug:
-		log_level = 10	# DEBUG
-	else:
-		log_level = 20	# INFO
-	logger = setup_logger(script_name, log_level)
+	
 	result = []
 	nb_ip = 0
 
