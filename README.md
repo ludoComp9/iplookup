@@ -16,7 +16,7 @@ This tool has been successfully tested on macOS 15.6/Python 3.9.6 with 255 IP re
 
 IP information like Longitude, Latitude, City and Region could be incorrect.
 
-Inspirted by [pwhois](https://github.com/dagonis/pwhois) Python library.
+Inspired by [pwhois](https://github.com/dagonis/pwhois) Python library.
 
 # Requirements
 
