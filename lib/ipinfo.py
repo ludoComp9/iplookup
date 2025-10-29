@@ -7,6 +7,7 @@ import re
 import logging
 import ipaddress
 from lib.log import setup_logger
+from lib.certinfo import fqdncert
 
 pw_server = 'whois.pwhois.org'
 pw_port = 43
@@ -19,9 +20,9 @@ class ip(object):
 		cls.logger.setLevel(log_level)
 
 	@classmethod
-	def lookup(cls, query, proxy=None):
-		def _prepare_result(ip='', fqdn='', ptr='', origin_as='', prefix='', as_path='', as_org_name='', org_name='', net_name='', cache_date='', latitude='', longitude='', city='', region='', country='', cc=''):
-			return {"IP": ip, "Primary FQDN": fqdn, "PTR": ptr, "Origin AS": origin_as, "Prefix": prefix, "AS path": as_path, "AS Org Name": as_org_name, "Org Name": org_name, "Net Name": net_name, "Cache Date": cache_date, "Latitude": latitude, "Longitude": longitude, "City": city, "Region": region, "Country": country, "CC": cc}
+	def lookup(cls, query, proxy=None, nmap_action=None, nmap_port=None):
+		def _prepare_result(ip='', fqdn='', fqdn_cert='', ptr='', origin_as='', prefix='', as_path='', as_org_name='', org_name='', net_name='', cache_date='', latitude='', longitude='', city='', region='', country='', cc=''):
+			return {"IP": ip, "Primary FQDN": fqdn, "FQDN Certificates": fqdn_cert, "PTR": ptr, "Origin AS": origin_as, "Prefix": prefix, "AS path": as_path, "AS Org Name": as_org_name, "Org Name": org_name, "Net Name": net_name, "Cache Date": cache_date, "Latitude": latitude, "Longitude": longitude, "City": city, "Region": region, "Country": country, "CC": cc}
 
 		"""Single query, takes a single IP (represented as a string) and returns a pwhois_obj."""
 		# Support IP address that could contain [.] separator
@@ -29,16 +30,31 @@ class ip(object):
 
 		if ip_ver := check_ip(upd_query):
 			cls.logger.debug(f"{upd_query} is a valid {ip_ver} address")
-			# Get FQDN(s)
+			# Get FQDN(s) from Get Host By Address
 			try:
 				answers = socket.gethostbyaddr(upd_query)
 				fqdn = answers[0]
-				ptr = answers[1]
+				if len(answers[1]) == 1:
+					ptr = answers[1][0]
+				else:
+					ptr = answers[1]
 			except Exception as e:
 				cls.logger.error(f"[{upd_query}] DNS lookup failed: {e}")			
 				fqdn = ''
 				ptr = ['']
 
+			# Get FQDN(s) from certificates found
+			fqdn_cert = []
+			if nmap_action:
+				finder = fqdncert(upd_query, ports=nmap_port)
+				results = finder.find_fqdns()
+				for res in results:
+					fqdn_cert.append(f"{res['fqdn']}:{res['port']}")
+					cls.logger.debug(f"Port: {res['port']} - FQDN: {res['fqdn']}")
+				if len(fqdn_cert) == 1: fqdn_cert = fqdn_cert[0]
+			if fqdn_cert == []:
+				fqdn_cert = ''
+			
 			# Get Lookup information
 			# --> Initialize proxy settings (if required)
 			if proxy:
@@ -57,6 +73,7 @@ class ip(object):
 				return _prepare_result(
 						whois_data[0].split(': ')[1],
 						fqdn,
+						fqdn_cert,
 						ptr,
 						whois_data[1].split(': ')[1],
 						whois_data[2].split(': ')[1],

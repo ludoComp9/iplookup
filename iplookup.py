@@ -8,6 +8,7 @@
 # 11/08/2025	0.03	Minor update
 # 14/08/2025	0.04	Add proxy support
 # 05/09/2025	0.05	Change standard output to JSON format and proxy configuration
+# 29/10/2025	0.06	Search FQDN from certificates found on opened/filtered ports
 
 import argparse
 import os
@@ -20,13 +21,15 @@ from lib.log import setup_logger
 from lib.ipinfo import ip
 
 
-__version__ = '0.05'
+__version__ = '0.06'
 
 def get_options():
 	""" Argument control """
 	parser = argparse.ArgumentParser(description=f"--== IP lookup v{__version__} ==--")
 	parser.add_argument('-V', '--version', action='version', version='{} v{}'.format(os.path.basename(__file__), __version__))
 	parser.add_argument('-d', '--debug', dest='debug', help='enable debug mode', action="store_true")
+	parser.add_argument('--nmap', dest='nmap', help='get FQDN from TLS certificate(s) retrieved from ports identified by nmap', action='store_true')
+	parser.add_argument('--nmap-port', dest='nmap_port', nargs='+', help='get FQDN from TLS certificate(s) retrieved from ports given in argument', metavar='<port>', type=int, action='store')
 	parser.add_argument('-i', dest='ip', help='IP to check', metavar='<ip address>')
 	parser.add_argument('--file', dest='ipfile', help='IPs to check', metavar='<filename>', action='store')
 	parser.add_argument('-s', '--separator', dest='separator', help='specify the separator used in input CSV file', metavar='<separator_character>', default=',')
@@ -71,6 +74,8 @@ if __name__ == "__main__":
 	else:
 		log_level = 20	# INFO
 	logger = setup_logger(script_name, log_level)
+	if not args.nmap_port:
+		args.nmap_port = ['443', '4443', '5443']
 	if not args.proxy and not args.noproxy and 'https_proxy' in os.environ:
 		# Use default proxy
 		logger.debug('Proxy system detected. Script will use it.')
@@ -90,7 +95,7 @@ if __name__ == "__main__":
 	if args.ip:
 		nb_ip += 1
 		ip.set_log_level(log_level)
-		result.append(ip.lookup(args.ip, args.proxy))
+		result.append(ip.lookup(args.ip, proxy=args.proxy, nmap_action=args.nmap, nmap_port=args.nmap_port))
 	elif args.ipfile:
 		with open(args.ipfile, newline='', encoding='utf-8') as csvfile:
 			reader = csv.reader(csvfile, delimiter=args.separator)
@@ -101,7 +106,7 @@ if __name__ == "__main__":
 				else:
 					item = row[args.field]
 				nb_ip += 1
-				if res := ip.lookup(item, args.proxy):
+				if res := ip.lookup(item, proxy=args.proxy, nmap_action=args.nmap, nmap_port=args.nmap_port):
 					result.append(res)
 	if result:
 		logger.info(f"{len(result)} lookup(s) successfully performed for {nb_ip} IP address(s) given.")
