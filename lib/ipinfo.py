@@ -20,9 +20,9 @@ class ip(object):
 		cls.logger.setLevel(log_level)
 
 	@classmethod
-	def lookup(cls, query, proxy=None):
-		def _prepare_result(ip='', fqdn='', ptr='', origin_as='', prefix='', as_path='', as_org_name='', org_name='', net_name='', cache_date='', latitude='', longitude='', city='', region='', country='', cc=''):
-			return {"IP": ip, "Primary FQDN": fqdn, "PTR": ptr, "Origin AS": origin_as, "Prefix": prefix, "AS path": as_path, "AS Org Name": as_org_name, "Org Name": org_name, "Net Name": net_name, "Cache Date": cache_date, "Latitude": latitude, "Longitude": longitude, "City": city, "Region": region, "Country": country, "CC": cc}
+	def lookup(cls, query, proxy=None, nmap_action=None, nmap_port=None):
+		def _prepare_result(ip='', fqdn='', fqdn_cert=[], ptr=[], origin_as='', prefix='', as_path='', as_org_name='', org_name='', net_name='', cache_date='', latitude='', longitude='', city='', region='', country='', cc=''):
+			return {"IP": ip, "Primary FQDN": fqdn, "FQDN Certificates": fqdn_cert, "PTR": ptr, "Origin AS": origin_as, "Prefix": prefix, "AS path": as_path, "AS Org Name": as_org_name, "Org Name": org_name, "Net Name": net_name, "Cache Date": cache_date, "Latitude": latitude, "Longitude": longitude, "City": city, "Region": region, "Country": country, "CC": cc}
 
 		"""Single query, takes a single IP (represented as a string) and returns a pwhois_obj."""
 		# Support IP address that could contain [.] separator
@@ -38,15 +38,17 @@ class ip(object):
 			except Exception as e:
 				cls.logger.error(f"[{upd_query}] DNS lookup failed: {e}")			
 				fqdn = ''
-				ptr = ['']
+				ptr = []
 
 			# Get FQDN(s) from certificates found
-			finder = fqdncert(upd_query, ports=[443, 5443])
-			cls.logger.info(f"FINDER:{finder}")
-			results = finder.find_fqdns()
-			for res in results:
-				cls.logger.info(f"Port: {res['port']} - FQDN: {res['fqdn']}")
-
+			fqdn_cert = []
+			if nmap_action:
+				finder = fqdncert(upd_query, ports=nmap_port)
+				results = finder.find_fqdns()
+				for res in results:
+					fqdn_cert.append(f"{res['fqdn']}:{res['port']}")
+					cls.logger.debug(f"Port: {res['port']} - FQDN: {res['fqdn']}")
+			
 			# Get Lookup information
 			# --> Initialize proxy settings (if required)
 			if proxy:
@@ -65,6 +67,7 @@ class ip(object):
 				return _prepare_result(
 						whois_data[0].split(': ')[1],
 						fqdn,
+						fqdn_cert,
 						ptr,
 						whois_data[1].split(': ')[1],
 						whois_data[2].split(': ')[1],
