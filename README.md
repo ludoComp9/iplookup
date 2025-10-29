@@ -23,7 +23,7 @@ Inspired by [pwhois](https://github.com/dagonis/pwhois) Python library.
 
 # Requirements
 
-`nmap` Network MAPper
+`nmap` Network MAPper tool is required to search additional FQDN from TLS certificate found on opened ports (by defaults: 443, 4443 and 5443).
 
 - **Debian / Linux**
 ```shell
