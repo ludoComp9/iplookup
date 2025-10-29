@@ -7,12 +7,15 @@ A small Python script to retrieve information from IP address(es) given in param
 Purpose of this very simple tool is to:
 - get a reverse DNS lookup
 - get IP information such as ASN, Organisation name, Network name, Country
+- search FQDN from SubjectAlternativeName / Common Name values defined in TLS certificate from opened ports identified by nmap
 
 Note: IP Lookup uses [pwhois](https://pwhois.org/) server to get information.
 
 # Note
 
-This tool has been successfully tested on macOS 15.6/Python 3.9.6 with 255 IP requests.
+This tool has been successfully tested on:
+- macOS 15.6/Python 3.9.6 with 255 IP requests
+- macOS 26.0.1/Python 3.12.11 with Nmap 7.98
 
 IP information like Longitude, Latitude, City and Region could be incorrect.
 
@@ -20,17 +23,18 @@ Inspired by [pwhois](https://github.com/dagonis/pwhois) Python library.
 
 # Requirements
 
-***If Git client tool is not already installed on your environment***
+`nmap` Network MAPper
 
 - **Debian / Linux**
 ```shell
-sudo apt update && sudo apt install git -y
+sudo apt update && sudo apt install git nmap -y
 ```
 
 - **macOS**
 ```shell
 brew update
 brew install git
+brew install nmap
 ```
 
 # Installation
@@ -47,15 +51,18 @@ chmod a+x iplookup.py
 # Usage
 
 ```plaintext
-usage: iplookup.py [-h] [-V] [-d] [-i <ip address>] [--file <filename>] [-s <separator_character>] [--field <separator_field>] [--format {json,csv}]
-                   [-o <filename>] [--proxy <proxy_host>:<proxy_port>]
+usage: iplookup.py [-h] [-V] [-d] [--nmap] [--nmap-port <port> [<port> ...]] [-i <ip address>] [--file <filename>] [-s <separator_character>]
+                   [--field <separator_field>] [--format {json,csv}] [-o <filename>] [--proxy <proxy_host>:<proxy_port>] [--noproxy]
 
---== IP lookup v0.05 ==--
+--== IP lookup v0.06 ==--
 
-optional arguments:
+options:
   -h, --help            show this help message and exit
   -V, --version         show program's version number and exit
   -d, --debug           enable debug mode
+  --nmap                get FQDN from TLS certificate(s) retrieved from ports identified by nmap
+  --nmap-port <port> [<port> ...]
+                        get FQDN from TLS certificate(s) retrieved from ports given in argument
   -i <ip address>       IP to check
   --file <filename>     IPs to check
   -s <separator_character>, --separator <separator_character>
@@ -72,25 +79,26 @@ optional arguments:
 
 # Example
 
-## Get IP information for an IPv4 address given in input
+## Get IP information for an IPv4 address given in input and check TLS certificates for opened ports found using nmap tool
 
-```shell
-./iplookup.py -i 8.8.8.8                                                     
-[2025-09-05 09:43:59,634][INFO][iplookup] 1 lookup(s) successfully performed for 1 IP address(s) given.
+```shell                                                 
+./iplookup.sh --nmap -i 8.8.8.8 
+[2025-10-29 16:15:17,611][INFO][iplookup] 1 lookup(s) successfully performed for 1 IP address(s) given.
 [
   {
     "IP": "8.8.8.8",
     "Primary FQDN": "dns.google",
-    "PTR": [
-      "8.8.8.8.in-addr.arpa"
+    "FQDN Certificates": [
+      "dns.google:443"
     ],
+    "PTR": "8.8.8.8.in-addr.arpa",
     "Origin AS": "15169",
     "Prefix": "8.8.8.0/24",
     "AS path": "8220 15169",
     "AS Org Name": "Google LLC",
     "Org Name": "Google LLC",
     "Net Name": "GOGL",
-    "Cache Date": "Sep 05 2025 06:01:13",
+    "Cache Date": "Oct 29 2025 05:56:26",
     "Latitude": "37.405992",
     "Longitude": "-122.078515",
     "City": "Mountain View",
@@ -111,13 +119,13 @@ optional arguments:
 
 - Command
 ```shell
-./iplookup.py --file ip_to_check.txt --output result.csv
+./iplookup.sh --nmap --file ip_to_check.txt --output result.csv
 [2025-08-05T14:59:19+z][INFO][IP Lookup] : 2 lookup(s) successfully performed for 2 IP address(s) given.
 ```
 
 - CSV file
 ```plaintext
-IP,Primary FQDN,PTR,Origin AS,Prefix,AS path,AS Org Name,Org Name,Net Name,Cache Date,Latitude,Longitude,City,Region,Country,CC
-8.8.8.8,dns.google,['8.8.8.8.in-addr.arpa'],15169,8.8.8.0/24,8220 15169,Google LLC,Google LLC,GOGL,Aug 05 2025 06:03:15,37.405992,-122.078515,Mountain View,California,United States of America,US
-184.86.236.41,a184-86-236-41.deploy.static.akamaitechnologies.com,['41.236.86.184.in-addr.arpa'],16625,184.86.236.0/22,293 6453 20940 16625,"Akamai Technologies, Inc.","Akamai International, BV",AIBV,Aug 05 2025 06:03:15,43.296950,5.381070,Marseille,Provence-Alpes-Cote-d'Azur,France,FR
+IP,Primary FQDN,FQDN Certificates,PTR,Origin AS,Prefix,AS path,AS Org Name,Org Name,Net Name,Cache Date,Latitude,Longitude,City,Region,Country,CC
+8.8.8.8,dns.google,dns.google:443,8.8.8.8.in-addr.arpa,15169,8.8.8.0/24,8220 15169,Google LLC,Google LLC,GOGL,Oct 29 2025 05:56:26,37.405992,-122.078515,Mountain View,California,United States of America,US
+184.86.236.41,a184-86-236-41.deploy.static.akamaitechnologies.com,www.homelandsecurity.gov:443,41.236.86.184.in-addr.arpa,16625,184.86.236.0/22,293 6453 20940 16625,"Akamai Technologies, Inc.","Akamai International, BV",AIBV,Oct 29 2025 05:56:26,43.296950,5.381070,Marseille,Provence-Alpes-Cote-d'Azur,France,FR
 ```

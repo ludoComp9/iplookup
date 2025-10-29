@@ -21,7 +21,7 @@ class ip(object):
 
 	@classmethod
 	def lookup(cls, query, proxy=None, nmap_action=None, nmap_port=None):
-		def _prepare_result(ip='', fqdn='', fqdn_cert=[], ptr=[], origin_as='', prefix='', as_path='', as_org_name='', org_name='', net_name='', cache_date='', latitude='', longitude='', city='', region='', country='', cc=''):
+		def _prepare_result(ip='', fqdn='', fqdn_cert='', ptr='', origin_as='', prefix='', as_path='', as_org_name='', org_name='', net_name='', cache_date='', latitude='', longitude='', city='', region='', country='', cc=''):
 			return {"IP": ip, "Primary FQDN": fqdn, "FQDN Certificates": fqdn_cert, "PTR": ptr, "Origin AS": origin_as, "Prefix": prefix, "AS path": as_path, "AS Org Name": as_org_name, "Org Name": org_name, "Net Name": net_name, "Cache Date": cache_date, "Latitude": latitude, "Longitude": longitude, "City": city, "Region": region, "Country": country, "CC": cc}
 
 		"""Single query, takes a single IP (represented as a string) and returns a pwhois_obj."""
@@ -34,11 +34,14 @@ class ip(object):
 			try:
 				answers = socket.gethostbyaddr(upd_query)
 				fqdn = answers[0]
-				ptr = answers[1]
+				if len(answers[1]) == 1:
+					ptr = answers[1][0]
+				else:
+					ptr = answers[1]
 			except Exception as e:
 				cls.logger.error(f"[{upd_query}] DNS lookup failed: {e}")			
 				fqdn = ''
-				ptr = []
+				ptr = ['']
 
 			# Get FQDN(s) from certificates found
 			fqdn_cert = []
@@ -48,6 +51,9 @@ class ip(object):
 				for res in results:
 					fqdn_cert.append(f"{res['fqdn']}:{res['port']}")
 					cls.logger.debug(f"Port: {res['port']} - FQDN: {res['fqdn']}")
+				if len(fqdn_cert) == 1: fqdn_cert = fqdn_cert[0]
+			if fqdn_cert == []:
+				fqdn_cert = ''
 			
 			# Get Lookup information
 			# --> Initialize proxy settings (if required)
