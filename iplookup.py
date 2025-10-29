@@ -20,7 +20,7 @@ from lib.log import setup_logger
 from lib.ipinfo import ip
 
 
-__version__ = '0.05'
+__version__ = '0.06'
 
 def get_options():
 	""" Argument control """

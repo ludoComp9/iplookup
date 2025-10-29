@@ -7,6 +7,7 @@ import re
 import logging
 import ipaddress
 from lib.log import setup_logger
+from lib.certinfo import fqdncert
 
 pw_server = 'whois.pwhois.org'
 pw_port = 43
@@ -29,7 +30,7 @@ class ip(object):
 
 		if ip_ver := check_ip(upd_query):
 			cls.logger.debug(f"{upd_query} is a valid {ip_ver} address")
-			# Get FQDN(s)
+			# Get FQDN(s) from Get Host By Address
 			try:
 				answers = socket.gethostbyaddr(upd_query)
 				fqdn = answers[0]
@@ -38,6 +39,13 @@ class ip(object):
 				cls.logger.error(f"[{upd_query}] DNS lookup failed: {e}")			
 				fqdn = ''
 				ptr = ['']
+
+			# Get FQDN(s) from certificates found
+			finder = fqdncert(upd_query, ports=[443, 5443])
+			cls.logger.info(f"FINDER:{finder}")
+			results = finder.find_fqdns()
+			for res in results:
+				cls.logger.info(f"Port: {res['port']} - FQDN: {res['fqdn']}")
 
 			# Get Lookup information
 			# --> Initialize proxy settings (if required)
