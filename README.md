@@ -54,7 +54,7 @@ chmod a+x iplookup.py
 usage: iplookup.py [-h] [-V] [-d] [--nmap] [--nmap-port <port> [<port> ...]] [-i <ip address>] [--file <filename>] [-s <separator_character>]
                    [--field <separator_field>] [--format {json,csv}] [-o <filename>] [--proxy <proxy_host>:<proxy_port>] [--noproxy]
 
---== IP lookup v0.06 ==--
+--== IP lookup v0.07 ==--
 
 options:
   -h, --help            show this help message and exit
