@@ -9,6 +9,7 @@
 # 14/08/2025	0.04	Add proxy support
 # 05/09/2025	0.05	Change standard output to JSON format and proxy configuration
 # 29/10/2025	0.06	Search FQDN from certificates found on opened/filtered ports
+# 11/09/2026	0.07	Fix obsolet Python components
 
 import argparse
 import os
@@ -21,7 +22,7 @@ from lib.log import setup_logger
 from lib.ipinfo import ip
 
 
-__version__ = '0.06'
+__version__ = '0.07'
 
 def get_options():
 	""" Argument control """
